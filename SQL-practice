@@ -1,0 +1,94 @@
+CREATE TABLE countries (
+  id bigint PRIMARY KEY,
+  name varchar(255)
+);
+
+CREATE TABLE country_regions (
+  id bigint PRIMARY KEY,
+  country_id bigint REFERENCES countries(id),
+  name varchar(255)
+);
+
+CREATE TABLE country_region_cities (
+  id bigint PRIMARY KEY,
+  country_region_id bigint REFERENCES country_regions(id),
+  name varchar(255)
+);
+
+INSERT INTO countries VALUES (1, 'Россия');
+INSERT INTO country_regions VALUES (1, 1, 'Татарстан');
+INSERT INTO country_regions VALUES (2, 1, 'Самарская область');
+INSERT INTO country_region_cities VALUES (1, 1, 'Бугульма');
+INSERT INTO country_region_cities VALUES (2, 1, 'Казань');
+INSERT INTO country_region_cities VALUES (3, 2, 'Тольятти');
+
+
+_____________________________________________________________________________
+
+
+CREATE TABLE orders (id bigint PRIMARY KEY, user_id bigint REFERENCES users(id), created_at TIMESTAMP);
+CREATE TABLE goods (id bigint PRIMARY KEY, name varchar(255), prica bigint);
+CREATE TABLE order_items (id bigint PRIMARY KEY, order_id bigint REFERENCES orders(id), good_id bigint REFERENCES orders(id));
+
+____________________________________________________________________________
+
+CREATE TABLE orders (id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY, user_id bigint REFERENCES users(id), created_at DATE);
+CREATE TABLE goods (id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY, name varchar(255), price bigint);
+CREATE TABLE order_items (id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY, order_id bigint REFERENCES orders(id), good_id bigint REFERENCES goods(id), price bigint);
+
+________________________________________________________________________________
+
+CREATE TABLE users (id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY, username varchar(255) UNIQUE NOT NULL, email varchar(255) NOT NULL, created_at DATE NOT NULL);
+CREATE TABLE topics (id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY, user_id bigint REFERENCES users(id),  body varchar(255) NOT NULL, created_at DATE NOT NULL);
+________________________________________________________________________________
+изменение колонок.
+было:
+CREATE TABLE users (
+  id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  email varchar(255) NOT NULL,
+  age integer,
+  name varchar(255)
+);
+
+
+ALTER TABLE users ADD UNIQUE (email);
+ALTER TABLE users DROP COLUMN age;
+ALTER TABLE users RENAME COLUMN name TO first_name;
+ALTER TABLE users ALTER COLUMN first_name SET NOT NULL;
+ALTER TABLE users ADD COLUMN created_at timestamp;
+
+стало:
+
+CREATE TABLE users (
+  id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  email varchar(255) NOT NULL UNIQUE,
+  first_name varchar(255) NOT NULL,
+  created_at timestamp
+);
+______________________________________________________________________________________
+запрос с сортировкой
+SELECT first_name FROM users ORDER BY birthday DESC NULLS LAST;
+_________________________________________________________________________________________-
+запрос с сортировкой , только уникальные данные (без повторов)
+SELECT DISTINCT house FROM users ORDER BY house;
+__________________________________________________________________________________________
+запрос на количество записей по полю home значение которого равно stark
+SELECT COUNT(*) FROM users WHERE house = 'stark';
+__________________________________________________________________________________________
+запрос с группировкой и сортировкой. Извлечь из поля birthday год рождения и подсчитать количество, если год указан
+
+SELECT EXTRACT(year FROM birthday) AS year_of_birthday, COUNT(*)
+  FROM users
+  WHERE birthday IS NOT NULL
+  GROUP BY year_of_birthday
+  ORDER BY year_of_birthday;
+_____________________________________________________________________________________________
+извлекает из базы идентификатор топика (таблица topics поле id) и имя автора топика (таблица users поле first_name) таблицы связаны первичным ключем связью: users.id<---->topics.user_id
+по условиям: 
+топики пользователей с доменом: lannister.com
+результат отсортирован по дате создания топика в прямом порядке.
+
+SELECT topics.id, first_name
+FROM topics LEFT JOIN users ON users.id = topics.user_id WHERE (email like '%@lannister.com') AND (topics.created_at IS NOT NULL) ORDER BY topics.created_at ASC;
+__________________________________________________________________________________________________
+
